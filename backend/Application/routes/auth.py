@@ -1,4 +1,5 @@
 import configparser
+import os
 from functools import wraps
 
 from bcrypt import hashpw # type: ignore
@@ -13,9 +14,11 @@ import bcrypt # type: ignore
 from Application.scripts.utils import insert_user
 
 secret = configparser.ConfigParser()
-secret.read('Application/scripts/config.ini') 
+config_path = os.path.join(os.path.dirname(__file__), '..', 'scripts', 'config.ini')
+secret.read(config_path)
 
 app.config['JWT_SECRET_KEY'] = secret['db']['SECRET_KEY']
+app.config['SECRET_KEY'] = secret['db']['SECRET_KEY']
 jwt = JWTManager(app)
 
 # decorator for verifying the JWT

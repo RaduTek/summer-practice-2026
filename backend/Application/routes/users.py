@@ -1,13 +1,15 @@
 from Application import app
 import configparser
 import pymongo # type: ignore
+import os
 from flask import jsonify # type: ignore
 from ..database.models import User
 
 # from backend.Application.routes.auth import token_required
 
 secret = configparser.ConfigParser()
-secret.read('Application/scripts/config.ini')
+config_path = os.path.join(os.path.dirname(__file__), '..', 'scripts', 'config.ini')
+secret.read(config_path)
 client = pymongo.MongoClient(secret['db']['MONGO_URL'])
 mydb = client.energysaving
 

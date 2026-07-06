@@ -1,7 +1,11 @@
-from flask_mongoengine import MongoEngine # type: ignore
+from mongoengine import connect # type: ignore
 
-db = MongoEngine()
 
 def initialize_db(app):
-    db.init_app(app)
+    mongo_settings = app.config.get('MONGODB_SETTINGS', {})
+    host = mongo_settings.get('host')
+    if not host:
+        raise ValueError('MONGODB_SETTINGS.host is required')
+
+    connect(host=host)
 
