@@ -6,7 +6,7 @@ Test Setup    Load Project
 
 *** Test Cases ***
 Login with no credentials
-    Attempt Invalid Login    ${EMPTY}    ${EMPTY}
+    Attempt Invalid Login    ${EMPTY}    ${EMPTY}    ${EMPTY}
 
 Login with valid credentials
     Attempt Login
@@ -28,8 +28,11 @@ Attempt Invalid Login
     [Arguments]
     ...    ${username}
     ...    ${password}
+    ...    ${error_message}=Invalid credentials
     
     Run Keyword And Expect Error    *
     ...    Attempt Login    ${username}    ${password}
     
-    Wait For Elements State    "Invalid credentials"
+    IF    "${error_message}" != "${EMPTY}"
+        Wait For Elements State    "${error_message}"
+    END

@@ -10,8 +10,31 @@ Test Setup    Run Keywords
 
 *** Test Cases ***
 Add New Device:
-    Add New Device     AirScale BTS 1    TIM Test Lab    09:30    23:00    2    20
-    Check Device Info  AirScale BTS 1    TIM Test Lab    09:30    23:00    2    20
+    Add New Device
+    ...    device_name=AirScale BTS 1
+    ...    device_sl_no=SN-000123
+    ...    device_type=Base Station
+    ...    hw_type=AirScale
+    ...    site=Milan
+    ...    group=TIM Test Lab
+    ...    owner=admin
+    ...    ip=192.168.1.10
+    ...    port=22
+    ...    connectivity_type=ssh
+    ...    login_user=testuser
+    ...    password=hunter2
+
+    Check Device Info
+    ...    device_name=AirScale BTS 1
+    ...    device_sl_no=SN-000123
+    ...    device_type=Base Station
+    ...    hw_type=AirScale
+    ...    site=Milan
+    ...    group=TIM Test Lab
+    ...    owner=admin
+    ...    connectivity_type=ssh
+    ...    ip=192.168.1.10
+    ...    port=22
 
 Edit Device:
     Click Device Option    AirScale BTS 1    Edit

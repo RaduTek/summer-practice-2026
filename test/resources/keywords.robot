@@ -35,9 +35,8 @@ Attempt Login
 Check Logged In
     [Documentation]
     ...    Check that the user is logged in (sidebar menu options are visible)
-    Wait For Elements State    a:has-text("Home")
-    Wait For Elements State    a:has-text("Profile")
-    Wait For Elements State    button:has-text("Logout")
+    Wait For Elements State    span:has-text("Home")
+    Wait For Elements State    span:has-text("Devices")
 
 Load Project and Login
     [Documentation]
@@ -51,44 +50,90 @@ Go To Page
     [Arguments]
     ...    ${page}
     
-    Click    a:has-text("${page}")
+    Click    span:has-text("${page}")
 
 Add New Device
     [Documentation]
     ...    Add a new device (must already be on the Devices page)
     [Arguments]
-    ...    ${name}
+    ...    ${device_name}
+    ...    ${device_sl_no}
+    ...    ${device_type}
+    ...    ${hw_type}
+    ...    ${site}
     ...    ${group}
-    ...    ${on_time}
-    ...    ${off_time}
-    ...    ${count}
-    ...    ${consumption}
+    ...    ${owner}
+    ...    ${ip}
+    ...    ${port}
+    ...    ${connectivity_type}
+    ...    ${login_user}=${EMPTY}
+    ...    ${password}=${EMPTY}
+    ...    ${read_community}=${EMPTY}
+    ...    ${write_community}=${EMPTY}
     
-    Wait For Elements State    "Add New Device"
-
-    Fill Text    ((//form)[1]//input)[1]    ${name}
-    Fill Text    ((//form)[1]//input)[2]    ${group}
-    Fill Text    ((//form)[1]//input)[3]    ${on_time}
-    Fill Text    ((//form)[1]//input)[4]    ${off_time}
-    Fill Text    ((//form)[1]//input)[5]    ${count}
-    Fill Text    ((//form)[1]//input)[6]    ${consumption}
-
     Click    button:has-text("Add Device")
 
-    Wait For Elements State    "Device added successfully!"
+    Fill Text    css=input[name="deviceName"]    ${device_name}
+    Fill Text    css=input[name="deviceSlNo"]    ${device_sl_no}
+    Fill Text    css=input[name="deviceType"]    ${device_type}
+    Fill Text    css=input[name="hwType"]    ${hw_type}
+    Fill Text    css=input[name="site"]    ${site}
+    Fill Text    css=input[name="group"]    ${group}
+    Fill Text    css=input[name="owner"]    ${owner}
+    Fill Text    css=input[name="ip"]    ${ip}
+    Fill Text    css=input[name="port"]    ${port}
+
+    Click    css=#add-device-form [role="combobox"]
+    Click    css=li[data-value="${connectivity_type}"]
+
+    IF    '${connectivity_type}' == 'ssh'
+        Fill Text    css=input[name="loginUser"]    ${login_user}
+        Fill Text    css=input[name="password"]    ${password}
+    ELSE IF    '${connectivity_type}' == 'snmp'
+        Fill Text    css=input[name="readCommunity"]    ${read_community}
+        Fill Text    css=input[name="writeCommunity"]    ${write_community}
+    ELSE
+        Fail    Unsupported connectivity type: ${connectivity_type}
+    END
+
+    Click    button:has-text("Submit")
+
+    Wait For Elements State    css=#add-device-form    detached
 
 Check Device Info
     [Documentation]
-    ...    Check device information for given name in the devices table
+    ...    Check device information for given name in the devices table.
+    ...    Any argument left as ${IGNORE} is not checked.
     [Arguments]
-    ...    ${name}
+    ...    ${device_name}=${IGNORE}
+    ...    ${device_sl_no}=${IGNORE}
+    ...    ${device_type}=${IGNORE}
+    ...    ${hw_type}=${IGNORE}
+    ...    ${site}=${IGNORE}
+    ...    ${group}=${IGNORE}
+    ...    ${owner}=${IGNORE}
+    ...    ${connectivity_type}=${IGNORE}
+    ...    ${ip}=${IGNORE}
+    ...    ${port}=${IGNORE}
+
+    # The table renders connectivity data in a single "Connection" column as
+    # "{type} | {ip}:{port}", defaulting any missing value to "-".
+    ${connection}=    Set Variable    ${IGNORE}
+    IF    '${connectivity_type}' != '${IGNORE}' or '${ip}' != '${IGNORE}' or '${port}' != '${IGNORE}'
+        ${conn_type}=    Set Variable If    '${connectivity_type}' == '${IGNORE}'    -    ${connectivity_type}
+        ${conn_ip}=      Set Variable If    '${ip}' == '${IGNORE}'                   -    ${ip}
+        ${conn_port}=    Set Variable If    '${port}' == '${IGNORE}'                 -    ${port}
+        ${connection}=    Set Variable    ${conn_type} | ${conn_ip}:${conn_port}
+    END
+
+    @{expected_values}    Create List
+    ...    ${device_sl_no}
+    ...    ${device_type}
+    ...    ${hw_type}
+    ...    ${site}
     ...    ${group}
-    ...    ${on_time}
-    ...    ${off_time}
-    ...    ${count}
-    ...    ${consumption}
-    
-    @{expected_values}    Create List    ${group}    ${on_time}    ${off_time}    ${count}    ${consumption}
+    ...    ${owner}
+    ...    ${connection}
 
     ${rows}=    Get Elements    css=table.MuiTable-root tbody > tr
 
@@ -100,9 +145,10 @@ Check Device Info
 
         Log    ${col_name}
 
-        IF    '${col_name}' == '${name}'
+        IF    '${col_name}' == '${device_name}'
             ${row_found}=    Set Variable    ${True}
-            FOR    ${i}    IN RANGE    0    5
+            FOR    ${i}    IN RANGE    0    7
+                IF    '${expected_values}[${i}]' == '${IGNORE}'    CONTINUE
                 ${table_index}=    Evaluate                    ${i} + 1
                 ${text}=           Get Text                    ${columns}[${table_index}]
                 Should Be Equal    ${expected_values}[${i}]    ${text}
@@ -111,7 +157,7 @@ Check Device Info
     END
 
     IF    not ${row_found}
-        Fail    Row with name '${name}' not found
+        Fail    Row with name '${device_name}' not found
     END
 
 Remove All Devices
